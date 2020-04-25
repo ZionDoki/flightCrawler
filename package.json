@@ -1,0 +1,16 @@
+{
+  "name": "flightCrawler",
+  "version": "1.0.0",
+  "description": "Search for flight info",
+  "main": "app.js",
+  "author": "Zion",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node .\\app.js"
+  },
+  "dependencies": {
+    "commander": "^5.0.0",
+    "puppeteer": "^3.0.1"
+  }
+}
