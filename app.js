@@ -75,7 +75,7 @@ function haveIdles(workerList) {
 
         let idleWokerIndex = haveIdles(workerList)
 
-        if ((workerList.length < maxNumChromium) && (idleWokerIndex == -1) && (preLoads <= maxNumChromium - workerList.length)) {
+        if ((idleWokerIndex == -1) && (preLoads <= maxNumChromium)) {
           httpUrl ? chromiumArgs.args.push(`--proxy-server=${httpUrl}`) : '';
           const browser = await puppeteer.launch(chromiumArgs);
           let ws = await browser.wsEndpoint();

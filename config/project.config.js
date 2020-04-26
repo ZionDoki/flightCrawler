@@ -5,13 +5,15 @@ const targetSite = "http://www.airchina.com.cn"
 const reportUrl = "http://150.109.147.131:8000/api/v1/airlines/report/airchina/"
 
 let maxTries = 3
-const maxNumChromium = 1
-const production = false
+const maxNumChromium = 9
+const production = true
 const listenPort = 3000
 const chromiumArgs = {
   headless: production,
   ignoreHTTPSErrors: true,
   args: [
+    '--blink-settings=imagesEnabled=false',
+    '--disable-images',
     '--no-sandbox', 
     '--disable-setuid-sandbox',
     '--enable-resource-load-scheduler=false',
