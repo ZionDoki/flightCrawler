@@ -1,5 +1,6 @@
-const express = require('express')
+const url = require('url')
 const chalk = require('chalk')
+const express = require('express')
 const cluster = require('cluster')
 const puppeteer = require('puppeteer')
 const { crawler } = require('./flightCrawler')
@@ -51,8 +52,16 @@ function haveIdles(workerList) {
 
     app.get("/crawl", async (req, res) => {
       try {
-        let { target } = req.query;
+
+        let { target, proxy } = req.query;
+        let auth = null;
+        let httpUrl = null;
         targetList = eval(target);
+        if (!!proxy) {
+          let urlObj = url.parse(proxy);
+          auth = urlObj.auth;
+          httpUrl = "http://" + urlObj.host;
+        }
 
         if (!target) {
           throw("Incomplete params")
@@ -61,13 +70,15 @@ function haveIdles(workerList) {
         }
 
         waitForCrawl.push(targetList)
+
         let idleWokerIndex = haveIdles(workerList)
-        // 如果没有启动，则启动
+
         if ((workerList.length < maxNumChromium) && (idleWokerIndex == -1)) {
+          httpUrl ? chromiumArgs.args.push(`--proxy-server=${httpUrl}`) : '';
           const browser = await puppeteer.launch(chromiumArgs);
           let ws = await browser.wsEndpoint();
           browser.disconnect();
-          let worker = cluster.fork({'WS': ws});
+          let worker = cluster.fork({'WS': ws, 'AUTH': auth});
           workerList.push({
             worker,
             status: "busy"
@@ -96,14 +107,13 @@ function haveIdles(workerList) {
             message: "Task delivered, queuing.."
           })
         }
-
       } catch (err) {
         res.json({
           status: false,
           error: err + ""
         })
       }
-    })
+    });
     
     app.listen(listenPort)
     console.log(chalk.green(`主进程运行在${process.pid}`))
@@ -112,18 +122,23 @@ function haveIdles(workerList) {
     console.log(chalk.green(`子进程运行在${process.pid}`))
     try {
       process.on("message", async (msg) => {
-        let browser = await puppeteer.connect({
-          browserWSEndpoint: process.env.WS
-        }); 
-        let res = await crawler(browser, msg.data, auth=null)
-        console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), res.status ? chalk.blueBright("有票") : chalk.red("没票"))
-        process.send({
-          type: "getTask"
-        })
+        if (msg.type == "startTask") {
+          let browser = await puppeteer.connect({
+            browserWSEndpoint: process.env.WS
+          });
+          let res = await crawler(browser, msg.data, auth=process.env.AUTH ? process.env.AUTH.split(':') : null);
+  
+          console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), res.status ? chalk.blueBright("有票") : chalk.red("没票"));
+  
+          process.send({
+            type: "getTask"
+          });
+        }
       })
     } catch (err) {
       console.log(chalk.red(`[子进程错误]: ${err + ""}`))
     }
+
 
   }
 })();

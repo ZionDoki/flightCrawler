@@ -25,8 +25,8 @@ async function crawler (context, params, auth) {
     try {
       if (!!auth) {
         page.authenticate({
-          username: auth.username,
-          password: auth.password
+          username: auth[0],
+          password: auth[1]
         })
       }
 
