@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { targetSite, maxTries } = require('./config/project.config');
 
 async function crawler (context, params, auth) {
@@ -7,6 +8,7 @@ async function crawler (context, params, auth) {
     time = params[2];
 
   let tries = maxTries;
+  let lastErr = null;
 
   let page = await context.newPage()
   await page.setExtraHTTPHeaders({
@@ -21,13 +23,14 @@ async function crawler (context, params, auth) {
     }
   })
 
-  while(tries >= 0) {
+  while(tries > 0) {
     try {
       if (!!auth) {
         page.authenticate({
           username: auth[0],
           password: auth[1]
         })
+        console.log(chalk.bgGreen(chalk.bold(`    > Start proxy `)))
       }
 
       await page.goto(targetSite)
@@ -88,22 +91,23 @@ async function crawler (context, params, auth) {
         haveFlight = { status: false }
       }
 
-      if (!Object.keys(haveFlight).includes("error")) {
-        haveFlight['params'] = params
-      }
+
+      haveFlight['params'] = params;
+      
 
       await page.close()
+      console.log()
       return haveFlight
     } catch (err) {
       if (tries >= 0) {
         tries = tries - 1
-        console.log("RETRY!" + JSON.stringify(params) + err)
-      } else {
-        await page.close()
-        return { status: false, error: "" + err }
-      }
+        console.log(`[RESTART]: ${start}-${end}-${time}`, chalk.red(`\n    ${err + ""}`))
+        lastErr = err + ""
+      } 
     }
   }
+  await page.close()
+  return { status: false, params, error: lastErr.indexOf("#deptDateShowGo") != -1 ? "Error: Two many requst" : lastErr }
 }
 
 module.exports = {

@@ -1,15 +1,17 @@
-const url = require('url')
-const chalk = require('chalk')
-const express = require('express')
-const cluster = require('cluster')
-const puppeteer = require('puppeteer')
-const { crawler } = require('./flightCrawler')
+const url = require('url');
+const chalk = require('chalk');
+const express = require('express');
+const cluster = require('cluster');
+const puppeteer = require('puppeteer');
 
-const { chromiumArgs, maxNumChromium, listenPort } = require('./config/project.config')
+const { report } = require('./api/report');
+const { crawler } = require('./flightCrawler');
+const { chromiumArgs, maxNumChromium, listenPort, version } = require('./config/project.config');
 
 const app = express();
 const waitForCrawl = [];
 const workerList = [];
+let preLoads = 0;
 /**
  * Find idle worker in list
  * @param {Array} workerList
@@ -52,7 +54,7 @@ function haveIdles(workerList) {
 
     app.get("/crawl", async (req, res) => {
       try {
-
+        preLoads += 1
         let { target, proxy } = req.query;
         let auth = null;
         let httpUrl = null;
@@ -73,7 +75,7 @@ function haveIdles(workerList) {
 
         let idleWokerIndex = haveIdles(workerList)
 
-        if ((workerList.length < maxNumChromium) && (idleWokerIndex == -1)) {
+        if ((workerList.length < maxNumChromium) && (idleWokerIndex == -1) && (preLoads <= maxNumChromium - workerList.length)) {
           httpUrl ? chromiumArgs.args.push(`--proxy-server=${httpUrl}`) : '';
           const browser = await puppeteer.launch(chromiumArgs);
           let ws = await browser.wsEndpoint();
@@ -114,12 +116,12 @@ function haveIdles(workerList) {
         })
       }
     });
-    
+    console.log(chalk.bold(chalk.bgBlue(`> ZionCrawler Ver ${version}  `)))
     app.listen(listenPort)
-    console.log(chalk.green(`主进程运行在${process.pid}`))
+    console.log(chalk.bold(chalk.blue(`  > Started HTTP Server on ${listenPort} \n  > Process id: ${process.pid}`)))
 
   } else {
-    console.log(chalk.green(`子进程运行在${process.pid}`))
+    console.log(chalk.green(chalk.bold(`    > Subprocess id: ${process.pid}`)))
     try {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
@@ -127,18 +129,24 @@ function haveIdles(workerList) {
             browserWSEndpoint: process.env.WS
           });
           let res = await crawler(browser, msg.data, auth=process.env.AUTH ? process.env.AUTH.split(':') : null);
-  
-          console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), res.status ? chalk.blueBright("有票") : chalk.red("没票"));
-  
+          if (res.status) {
+            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.blueBright("有票"));
+            let reportRes = await report(res.params[0], res.params[1], res.params[2], 1);
+            console.log(reportRes.data);
+          } else if(Object.keys(res).includes("error")) {
+            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.red(`${res.error}`));
+          } else {
+            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.redBright("没票"));
+            let reportRes = await report(res.params[0], res.params[1], res.params[2], 0);
+            console.log(reportRes.data);
+          }
           process.send({
             type: "getTask"
           });
         }
       })
     } catch (err) {
-      console.log(chalk.red(`[子进程错误]: ${err + ""}`))
+      console.log(chalk.bold(chalk.red(`[子进程错误]: ${err + ""}`)))
     }
-
-
   }
 })();
