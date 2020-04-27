@@ -4,7 +4,8 @@ const version = "1.0.0"
 const targetSite = "http://www.airchina.com.cn"
 const reportUrl = "http://150.109.147.131:8000/api/v1/airlines/report/airchina/"
 
-let maxTries = 3
+
+const delay = 1000
 const maxNumChromium = 4
 const production = true
 const listenPort = 3000
@@ -30,10 +31,10 @@ const chromiumArgs = {
 module.exports = {
   production,
   targetSite,
-  maxTries,
   chromiumArgs,
   maxNumChromium,
   listenPort,
   version,
-  reportUrl
+  reportUrl,
+  delay
 }

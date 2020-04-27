@@ -3,11 +3,17 @@ const chalk = require('chalk');
 const express = require('express');
 const cluster = require('cluster');
 const puppeteer = require('puppeteer');
-
 const { report } = require('./api/report');
 const { crawler } = require('./flightCrawler');
 const { sleep } = require("./utils")
-const { chromiumArgs, maxNumChromium, listenPort, version } = require('./config/project.config');
+const { 
+  chromiumArgs, 
+  maxNumChromium, 
+  listenPort, 
+  version, 
+  delay 
+} = require('./config/project.config');
+
 
 const app = express();
 const waitForCrawl = [];
@@ -139,7 +145,8 @@ function messageHandler(worker, data) {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
           let browser = await puppeteer.connect(chromiumArgs);
-          await sleep(4000)
+          await sleep(delay);
+          
           let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
 
           if (res.status) {
