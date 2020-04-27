@@ -6,12 +6,14 @@ const puppeteer = require('puppeteer');
 
 const { report } = require('./api/report');
 const { crawler } = require('./flightCrawler');
+const { sleep } = require("./utils")
 const { chromiumArgs, maxNumChromium, listenPort, version } = require('./config/project.config');
 
 const app = express();
 const waitForCrawl = [];
 const workerList = [];
 let preLoads = 0;
+
 /**
  * Find idle worker in list
  * @param {Array} workerList
@@ -24,33 +26,36 @@ function haveIdles(workerList) {
   return -1
 }
 
+function messageHandler(worker, data) {
+      
+  if (data.type == "getTask") {
+    if (waitForCrawl.length != 0 ) {
+      worker.send({
+        type: "startTask",
+        data: waitForCrawl.shift()
+      })
+    } else {
+      // 如果没有任务了，就置为空闲
+      for (let index in workerList) {
+        if (workerList[index].worker == worker) {
+          workerList[index].status = 'idle'
+        }
+      }
+    }
+  }
+}
+
 (async()=>{
   if (cluster.isMaster) {
 
-    // let waitForCrawl = new Proxy([], {
-    //   set: async (preWoker, prop, value) => {
-    //     console.log(prop, value)
-    //   } 
-    // });
-    // 这里实现当 obj 清零的时候，且 wokers 中空闲状态不为空时，下达启动指令
+    cluster.on('exit', (worker) => {
+      worker.removeAllListeners();
+      workerList.shift();
+      preLoads = workerList.length;
+      console.log(chalk.gray(`    > Subprocess id ${chalk.bold(worker.process.pid)} worker died `));
+    });
 
-    cluster.on("message", (worker, data) => {
-      if (data.type == "getTask") {
-        if (waitForCrawl.length != 0 ) {
-          worker.send({
-            type: "startTask",
-            data: waitForCrawl.shift()
-          })
-        } else {
-          // 如果没有任务了，就置为空闲
-          for (let index in workerList) {
-            if (workerList[index].worker == worker) {
-              workerList[index].status = 'idle'
-            }
-          }
-        }
-      } 
-    })
+    cluster.on("message", messageHandler)
 
     app.get("/crawl", async (req, res) => {
       try {
@@ -71,12 +76,16 @@ function haveIdles(workerList) {
           if(targetList.length != 3) throw("Error params")
         }
 
-        waitForCrawl.push(targetList)
+        waitForCrawl.push(targetList);
 
-        let idleWokerIndex = haveIdles(workerList)
+        let idleWokerIndex = haveIdles(workerList);
 
         if ((idleWokerIndex == -1) && (preLoads <= maxNumChromium)) {
-          httpUrl ? chromiumArgs.args.push(`--proxy-server=${httpUrl}`) : '';
+          if (httpUrl) {
+            chromiumArgs.args.push(`--proxy-server=${httpUrl}`)
+            console.log(chalk.bgGreen(chalk.bold(`    > Start proxy: ${httpUrl}`)))
+          } 
+          await sleep
           const browser = await puppeteer.launch(chromiumArgs);
           let ws = await browser.wsEndpoint();
           browser.disconnect();
@@ -121,32 +130,48 @@ function haveIdles(workerList) {
     console.log(chalk.bold(chalk.blue(`  > Started HTTP Server on ${listenPort} \n  > Process id: ${process.pid}`)))
 
   } else {
+    chromiumArgs['browserWSEndpoint'] = process.env.WS;
     console.log(chalk.green(chalk.bold(`    > Subprocess id: ${process.pid}`)))
+    setInterval(() => {
+      console.log(`Memory usage: ${process.memoryUsage().rss / 1024 / 1024} MB`)
+    }, 10000)
     try {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
-          let browser = await puppeteer.connect({
-            browserWSEndpoint: process.env.WS
-          });
-          let res = await crawler(browser, msg.data, auth=process.env.AUTH ? process.env.AUTH.split(':') : null);
+          let browser = await puppeteer.connect(chromiumArgs);
+          await sleep(4000)
+          let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
+
           if (res.status) {
-            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.blueBright("有票"));
+            console.log(chalk.green(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: ${chalk.bold(chalk.bgGreen(chalk.white(" 有票 ")))}`));
             let reportRes = await report(res.params[0], res.params[1], res.params[2], 1);
             console.log(reportRes.data);
           } else if(Object.keys(res).includes("error")) {
-            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.red(`${res.error}`));
+            console.log(chalk.bgGreen(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.red(`${res.error}`));
           } else {
-            console.log(chalk.green(`From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.redBright("没票"));
+            console.log(chalk.green(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: ${chalk.bold(chalk.bgRedBright(chalk.white(" 没票 ")))}`), );
             let reportRes = await report(res.params[0], res.params[1], res.params[2], 0);
             console.log(reportRes.data);
           }
-          process.send({
-            type: "getTask"
-          });
+
+
+          // if (false) {
+          if (process.memoryUsage().rss < 52428650) {
+            // 这一段忘了写有可能造成内存泄漏
+            await browser.disconnect()
+            process.send({
+              type: "getTask"
+            });
+          } else {
+            await browser.close()
+            process.removeAllListeners()
+            process.exit()
+          }
         }
       })
     } catch (err) {
       console.log(chalk.bold(chalk.red(`[子进程错误]: ${err + ""}`)))
+      process.exit()
     }
   }
 })();

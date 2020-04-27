@@ -1,5 +1,6 @@
 const axios = require('axios');
 const examples = [
+  ["PEK","PVG","2020-05-01"],
   ["LAX","PEK","2020-05-03"],
   ["LAX","PEK","2020-05-10"],
   ["LAX","PEK","2020-05-17"],
@@ -66,19 +67,7 @@ function intervalTest(path, params, interval) {
 
     index += 1
   }, interval)
-} 
-
-
-
-// tester("http://localhost:3000/crawl", [
-//   ["LAX","PEK","2020-04-26"],
-//   ["LAX","PEK","2020-05-03"],
-//   ["LHR","PEK","2020-05-01"],
-//   ["YVR","PEK","2020-04-26"],
-//   ["YVR","PEK","2020-05-03"],
-//   ["FRA","CTU","2020-04-25"],
-//   ["FRA","CTU","2020-05-02"],
-//   ["PEK","SHA","2020-05-02"]
-// ])
+}
 
 intervalTest("http://localhost:3000/crawl", examples, interval = 1000)
+98.8

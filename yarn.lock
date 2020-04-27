@@ -497,6 +497,13 @@ negotiator@0.6.2:
   resolved "https://registry.npm.taobao.org/negotiator/download/negotiator-0.6.2.tgz#feacf7ccf525a77ae9634436a64883ffeca346fb"
   integrity sha1-/qz3zPUlp3rpY0Q2pkiD/+yjRvs=
 
+object-sizeof@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.npm.taobao.org/object-sizeof/download/object-sizeof-1.6.0.tgz#847d0b67d96cbf1f8dda63c58ad3d8fbd1adeba8"
+  integrity sha1-hH0LZ9lsvx+N2mPFitPY+9Gt66g=
+  dependencies:
+    buffer "^5.5.0"
+
 on-finished@~2.3.0:
   version "2.3.0"
   resolved "https://registry.npm.taobao.org/on-finished/download/on-finished-2.3.0.tgz#20f1336481b083cd75337992a16971aa2d906947"
