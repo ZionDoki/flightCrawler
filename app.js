@@ -138,15 +138,12 @@ function messageHandler(worker, data) {
   } else {
     chromiumArgs['browserWSEndpoint'] = process.env.WS;
     console.log(chalk.green(chalk.bold(`    > Subprocess id: ${process.pid}`)))
-    setInterval(() => {
-      console.log(`Memory usage: ${process.memoryUsage().rss / 1024 / 1024} MB`)
-    }, 10000)
     try {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
           let browser = await puppeteer.connect(chromiumArgs);
           await sleep(delay);
-          
+
           let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
 
           if (res.status) {
@@ -162,8 +159,7 @@ function messageHandler(worker, data) {
           }
 
 
-          // if (false) {
-          if (process.memoryUsage().rss < 52428650) {
+          if (process.memoryUsage().rss < 62914560) {
             // 这一段忘了写有可能造成内存泄漏
             await browser.disconnect()
             process.send({
