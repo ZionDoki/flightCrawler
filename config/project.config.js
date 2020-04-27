@@ -28,6 +28,8 @@ const chromiumArgs = {
   slowMo: production ? 0 : 20
 }
 
+const proxy = `http://0418fq50t1m:0418fq50t1m@${production ? "127.0.0.1" : "150.109.147.131"}:800/`
+
 module.exports = {
   production,
   targetSite,
@@ -36,5 +38,6 @@ module.exports = {
   listenPort,
   version,
   reportUrl,
+  proxy,
   delay
 }

@@ -1,4 +1,6 @@
 const axios = require('axios');
+const { proxy } = require('./config/project.config')
+
 const examples = [
   ["PEK","PVG","2020-05-01"],
   ["LAX","PEK","2020-05-03"],
@@ -59,7 +61,7 @@ function intervalTest(path, params, interval) {
     axios.get(path, {
       params: {
         target: params[index],
-        proxy: "http://0418fq50t1m:0418fq50t1m@150.109.147.131:800/"
+        proxy,
       }
     }).then(res => {
       console.log(res.data)
