@@ -38,6 +38,7 @@ async function crawler (context, params, auth) {
         username: auth[0],
         password: auth[1]
       })
+      console.log(auth[0], auth[1])
     }
     await page.goto(targetSite)
     await page.type("#deptDateShowGo", time, {delay: 0})

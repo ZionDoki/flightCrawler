@@ -91,7 +91,7 @@ function messageHandler(worker, data) {
             chromiumArgs.args.push(`--proxy-server=${httpUrl}`)
             console.log(chalk.bgGreen(chalk.bold(`    > Start proxy: ${httpUrl}`)))
           } 
-          await sleep
+          // await sleep
           const browser = await puppeteer.launch(chromiumArgs);
           let ws = await browser.wsEndpoint();
           browser.disconnect();
