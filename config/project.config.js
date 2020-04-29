@@ -4,7 +4,6 @@ const version = "1.0.0"
 const targetSite = "http://www.airchina.com.cn"
 const reportUrl = "http://150.109.147.131:8000/api/v1/airlines/report/airchina/"
 
-
 const delay = 1000
 const maxNumChromium = 4
 const production = true

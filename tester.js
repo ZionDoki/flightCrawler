@@ -1,38 +1,8 @@
 const axios = require('axios');
-const { proxy } = require('./config/project.config')
+const { readFile } = require("./utils/readFile");
+const { proxy } = require('./config/project.config');
 
-const examples = [
-  ["PEK","PVG","2020-05-01"],
-  ["LAX","PEK","2020-05-03"],
-  ["LAX","PEK","2020-05-10"],
-  ["LAX","PEK","2020-05-17"],
-  ["LAX","PEK","2020-05-24"],
-  ["LAX","PEK","2020-05-31"],
-  ["LHR","PEK","2020-04-24"],
-  ["LHR","PEK","2020-05-01"],
-  ["LHR","PEK","2020-05-08"],
-  ["LHR","PEK","2020-05-15"],
-  ["LHR","PEK","2020-05-22"],
-  ["LHR","PEK","2020-05-29"],
-  ["YVR","PEK","2020-05-03"],
-  ["YVR","PEK","2020-05-10"],
-  ["YVR","PEK","2020-05-17"],
-  ["YVR","PEK","2020-05-24"],
-  ["FRA","CTU","2020-05-02"],
-  ["FRA","CTU","2020-05-09"],
-  ["FRA","CTU","2020-05-16"],
-  ["FRA","CTU","2020-05-23"],
-  ["ICN","PEK","2020-05-01"],
-  ["ICN","PEK","2020-05-08"],
-  ["ICN","PEK","2020-05-15"],
-  ["ICN","PEK","2020-05-22"],
-  ["ICN","PEK","2020-05-29"],
-  ["CDG","PEK","2020-04-29"],
-  ["CDG","PEK","2020-05-06"],
-  ["CDG","PEK","2020-05-13"],
-  ["CDG","PEK","2020-05-20"],
-  ["CDG","PEK","2020-05-27"]
-];
+const examples = readFile("/root/ticketmonitor/airchain_slave/airlines.ini")
 
 /**
  * 

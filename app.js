@@ -142,24 +142,34 @@ function messageHandler(worker, data) {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
           let browser = await puppeteer.connect(chromiumArgs);
-          await sleep(delay);
-
+          
+          // await sleep(delay);
           let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
 
           if (res.status) {
             console.log(chalk.green(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: ${chalk.bold(chalk.bgGreen(chalk.white(" 有票 ")))}`));
-            let reportRes = await report(res.params[0], res.params[1], res.params[2], 1);
-            console.log(reportRes.data);
+            report(res.params[0], res.params[1], res.params[2], 1).then(res => {
+              if(!res.data.status) {
+                console.log(res.data)
+              }
+            }).catch(err => {
+              console.log(err);
+            });
           } else if(Object.keys(res).includes("error")) {
             console.log(chalk.bgGreen(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: `), chalk.red(`${res.error}`));
           } else {
             console.log(chalk.green(`        - From ${res.params[0]} to ${res.params[1]} on ${res.params[2]} is: ${chalk.bold(chalk.bgRedBright(chalk.white(" 没票 ")))}`), );
-            let reportRes = await report(res.params[0], res.params[1], res.params[2], 0);
-            console.log(reportRes.data);
+            report(res.params[0], res.params[1], res.params[2], 0).then(res => {
+              if(!res.data.status) {
+                console.log(res.data)
+              }
+            }).catch(err => {
+              console.log(err);
+            });
           }
 
 
-          if (process.memoryUsage().rss < 62914560) {
+          if (process.memoryUsage().rss < 57671680) {
             // 这一段忘了写有可能造成内存泄漏
             await browser.disconnect()
             process.send({
