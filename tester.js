@@ -28,18 +28,21 @@ function intervalTest(path, params, interval) {
       index = 0
     }
 
-    axios.get(path, {
-      params: {
-        target: params[index],
-        proxy,
-      }
-    }).then(res => {
-      console.log(res.data)
-    })
+    if(params[index].length != 0 ) {
+      axios.get(path, {
+        params: {
+          target: params[index],
+          proxy,
+        }
+      }).then(res => {
+        console.log(res.data)
+      })
+    }
+
 
     index += 1
   }, interval)
 }
 
-intervalTest("http://localhost:3000/crawl", examples, interval = 1000)
+intervalTest("http://localhost:3000/crawl", examples, interval = 200)
 98.8
