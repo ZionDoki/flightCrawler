@@ -142,7 +142,7 @@ function messageHandler(worker, data) {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
           let browser = await puppeteer.connect(chromiumArgs);
-          
+       	  console.log(msg.data)   
           // await sleep(delay);
           let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
 
@@ -169,7 +169,7 @@ function messageHandler(worker, data) {
           }
 
 
-          if (process.memoryUsage().rss < 57671680) {
+          if (process.memoryUsage().rss < 60671680) {
             // 这一段忘了写有可能造成内存泄漏
             await browser.disconnect()
             process.send({

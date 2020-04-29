@@ -2,7 +2,7 @@ const axios = require('axios');
 const { readFile } = require("./utils/readFile");
 const { proxy, production } = require('./config/project.config');
 
-const examples = readFile(production ? "/root/ticketmonitor/airchain_slave/airlines.ini" : "./test.ini")
+const examples = readFile(production ? "/root/ticketmonitor/airchina_slave/airlines.ini" : "./test.ini")
 
 /**
  * 
@@ -31,7 +31,7 @@ function intervalTest(path, params, interval) {
     axios.get(path, {
       params: {
         target: params[index],
-        // proxy,
+        proxy,
       }
     }).then(res => {
       console.log(res.data)
