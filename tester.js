@@ -44,5 +44,5 @@ function intervalTest(path, params, interval) {
   }, interval)
 }
 
-intervalTest("http://localhost:3000/crawl", examples, interval = 200)
+intervalTest("http://localhost:3000/crawl", examples, interval = 1800)
 98.8

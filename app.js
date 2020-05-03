@@ -75,7 +75,6 @@ function messageHandler(worker, data) {
           auth = urlObj.auth;
           httpUrl = "http://" + urlObj.host;
         }
-
         if (!target) {
           throw("Incomplete params")
         } else {
@@ -142,7 +141,6 @@ function messageHandler(worker, data) {
       process.on("message", async (msg) => {
         if (msg.type == "startTask") {
           let browser = await puppeteer.connect(chromiumArgs);
-       	  console.log(msg.data)   
           // await sleep(delay);
           let res = await crawler(browser, msg.data, auth=(process.env.AUTH != 'null') ? process.env.AUTH.split(':') : null);
 
