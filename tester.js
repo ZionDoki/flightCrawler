@@ -2,7 +2,7 @@ const axios = require('axios');
 const { readFile } = require("./utils/readFile");
 const { proxy, production } = require('./config/project.config');
 
-const examples = readFile(production ? "/root/ticketmonitor/airchina_slave/airlines.ini" : "./test.ini")
+let examples = readFile(production ? "/root/ticketmonitor/airchina_slave/airlines.ini" : "./test.ini")
 
 /**
  * 
@@ -21,17 +21,19 @@ function tester(path, params) {
   })
 }
 
-function intervalTest(path, params, interval) {
+function intervalTest(path, interval) {
   let index = 0;
   setInterval(() => {
-    if (index > (params.length - 1)) {
+    if (index > (examples.length - 1)) {
+      console.log("读取目标文件..");
+      examples = readFile(production ? "/root/ticketmonitor/airchina_slave/airlines.ini" : "./test.ini");
       index = 0
     }
 
-    if(params[index].length != 0 ) {
+    if(examples[index].length != 0 ) {
       axios.get(path, {
         params: {
-          target: params[index],
+          target: examples[index],
           proxy,
         }
       }).then(res => {
@@ -44,5 +46,5 @@ function intervalTest(path, params, interval) {
   }, interval)
 }
 
-intervalTest("http://localhost:3000/crawl", examples, interval = 1800)
-98.8
+intervalTest("http://localhost:3000/crawl", interval = 2000)
+
